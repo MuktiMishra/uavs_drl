@@ -1,0 +1,28 @@
+# Configuration for UAV Multi-Agent Grid Simulation
+
+environment:
+  grid_size: 10
+  num_agents: 2
+  num_targets: 15
+  wind_probability: 0.1
+  wind_strength_min: 0.2
+  wind_strength_max: 0.8
+  
+
+agent:
+  state_dim: 5  # x,y agent pos + x,y target pos (per agent)
+  action_dim: 5  # 4 directions + stay put
+  memory_size: 10000
+  batch_size: 64
+  gamma: 0.99
+  epsilon_start: 1.0
+  epsilon_min: 0.05
+  epsilon_decay: 0.995
+  lr: 0.001
+  update_target_every: 10
+
+training:
+  episodes: 10
+  max_steps_per_episode: 100
+  render: true
+  render_fps: 5
