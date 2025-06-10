@@ -1,0 +1,74 @@
+# === config.yaml ===
+
+# Environment Config
+env_config:
+  grid_size: 15
+  num_victims: 22  # 10% of 15x15
+  channels: 7
+  max_steps: 300
+  battery_max: 1.0
+  mission_time_max: 1.0
+  fixed_victims:
+    - [2, 3]
+    - [4, 7]
+    - [5, 5]
+    - [6, 9]
+    - [8, 1]
+    - [10, 10]
+    - [3, 12]
+    - [13, 5]
+    - [12, 2]
+    - [9, 13]
+    - [1, 4]
+    - [7, 3]
+    - [11, 7]
+    - [6, 12]
+    - [2, 10]
+    - [8, 8]
+    - [13, 13]
+    - [4, 1]
+    - [12, 9]
+    - [5, 14]
+    - [0, 13]
+    - [14, 0]
+  fixed_obstacles:
+    - [1, 1]
+    - [3, 3]
+    - [6, 6]
+    - [7, 8]
+    - [9, 9]
+    - [11, 4]
+    - [4, 11]
+    - [13, 13]
+
+# PPO Config
+ppo_config:
+  learning_rate: 0.0001
+  gamma: 0.99
+  eps_clip: 0.2
+  k_epochs: 4
+  entropy_coef: 0.01
+  value_loss_coef: 0.5
+  max_grad_norm: 0.5
+  batch_size: 64
+  update_timestep: 2000
+  total_timesteps: 100000
+
+# Energy Costs
+energy_config:
+  E_base: 0.005
+  E_action: 0.01
+  E_task: 0.01
+  k_wind: 0.03
+  env_noise_std: 0.001
+
+# Action Map
+ACTIONS:
+  0: "Explore Path"
+  1: "Task Allocation"
+  2: "Task Handover"
+  3: "Reroute Path"
+  4: "Move Up"
+  5: "Move Down"
+  6: "Move Left"
+  7: "Move Right"
