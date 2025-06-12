@@ -1,5 +1,3 @@
-# === uav_env.py ===
-
 import gym
 import numpy as np
 from gym import spaces
@@ -125,4 +123,4 @@ class UAVEnv(gym.Env):
                 pygame.draw.rect(self.screen, color, (x, y, cell_size, cell_size))
 
         pygame.display.flip()
-        self.clock.tick(40)  # FPS (reduce to make agent faster)
+        self.clock.tick(40)  
