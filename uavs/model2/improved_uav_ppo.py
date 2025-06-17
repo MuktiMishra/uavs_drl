@@ -368,66 +368,79 @@ class DiagnosticPPOAgent:
 
     def update_with_loss_tracking(self):
         if len(self.states) == 0:
+            print("Memory is empty, no update.") # Add this for empty memory case
             return 0.0, 0.0, 0.0, 0.0
-
+    
         states = torch.tensor(np.array(self.states), dtype=torch.float32).to(device)
         actions = torch.tensor(self.actions, dtype=torch.long).to(device)
         old_log_probs = torch.tensor(self.log_probs, dtype=torch.float32).to(device)
         old_values = torch.tensor(self.values, dtype=torch.float32).to(device)
-
+    
         returns = self._calculate_returns()
         advantages = returns - old_values
-
+    
+        # --- DEBUGGING PRINTS ---
+        print(f"DEBUG - Returns (mean/std/min/max): {returns.mean().item():.4f} / {returns.std().item():.4f} / {returns.min().item():.4f} / {returns.max().item():.4f}")
+        print(f"DEBUG - Old Values (mean/std/min/max): {old_values.mean().item():.4f} / {old_values.std().item():.4f} / {old_values.min().item():.4f} / {old_values.max().item():.4f}")
+        print(f"DEBUG - Advantages BEFORE norm (mean/std/min/max): {advantages.mean().item():.4f} / {advantages.std().item():.4f} / {advantages.min().item():.4f} / {advantages.max().item():.4f}")
+        # --- END DEBUGGING PRINTS ---
+    
         # Normalize advantages for more stable training
         if advantages.std() > 1e-8:
             advantages = (advantages - advantages.mean()) / (advantages.std() + 1e-8)
         else:
             advantages = torch.zeros_like(advantages)
-
+    
+        # --- DEBUGGING PRINTS ---
+        print(f"DEBUG - Advantages AFTER norm (mean/std/min/max): {advantages.mean().item():.4f} / {advantages.std().item():.4f} / {advantages.min().item():.4f} / {advantages.max().item():.4f}")
+        # --- END DEBUGGING PRINTS ---
+    
         total_actor_loss = 0.0
         total_critic_loss = 0.0
         total_entropy = 0.0
-
-        for _ in range(self.k_epochs):
+    
+        for epoch in range(self.k_epochs): # Renamed _ to epoch for clarity
             logits, values = self.model(states)
             probs = torch.softmax(logits, dim=1)
             dist = torch.distributions.Categorical(probs)
-
+    
             new_log_probs = dist.log_prob(actions)
             entropy = dist.entropy()
-
+    
             # PPO clipping
             ratio = torch.exp(new_log_probs - old_log_probs)
             surr1 = ratio * advantages
             surr2 = torch.clamp(ratio, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
             policy_loss = -torch.min(surr1, surr2).mean()
-
+    
             # Value loss (clipped value loss can also be used, but MSE is common)
             value_loss = nn.MSELoss()(values.squeeze(), returns)
-
+    
             # Entropy bonus
             entropy_loss = -self.entropy_coef * entropy.mean()
-
+    
             # Total loss
             loss = policy_loss + 0.5 * value_loss + entropy_loss
-
+    
             total_actor_loss += policy_loss.item()
             total_critic_loss += value_loss.item()
             total_entropy += entropy.mean().item()
-
+    
             # Update
             self.optimizer.zero_grad()
             loss.backward()
+    
+            # --- DEBUGGING PRINTS ---
+            # Check gradients of policy head weights
+            if self.model.policy_head.weight.grad is not None:
+                grad_norm = self.model.policy_head.weight.grad.norm().item()
+                print(f"DEBUG - Epoch {epoch}, Policy Head Grad Norm: {grad_norm:.6f}")
+            else:
+                print(f"DEBUG - Epoch {epoch}, Policy Head Grad is None")
+            # --- END DEBUGGING PRINTS ---
+    
             torch.nn.utils.clip_grad_norm_(self.model.parameters(), 0.5) # Gradient clipping
             self.optimizer.step()
-
-        self.clear_memory()
-        avg_loss = (total_actor_loss + total_critic_loss) / self.k_epochs
-        return (avg_loss,
-                total_actor_loss / self.k_epochs,
-                total_critic_loss / self.k_epochs,
-                total_entropy / self.k_epochs)
-
     def _calculate_returns(self):
         returns = []
         discounted_sum = 0
