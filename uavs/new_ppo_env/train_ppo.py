@@ -17,13 +17,13 @@ env_cfg = config["env_config"]
 ppo_cfg = config["ppo_config"]
 action_size = len(config["ACTIONS"])
 
-# === Init ===
+
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 env = UAVEnv(config)
 model = CNNActorCritic(env_cfg['channels'], action_size).to(device)
 optimizer = optim.Adam(model.parameters(), lr=ppo_cfg['learning_rate'])
 
-# === PPO Storage ===
+
 class RolloutBuffer:
     def __init__(self):
         self.states, self.actions, self.logprobs, self.rewards, self.is_terminals = [], [], [], [], []
@@ -41,7 +41,7 @@ def compute_returns(rewards, gamma, dones):
         returns.insert(0, R)
     return returns
 
-# === Training Loop ===
+
 timestep = 0
 reward_log = []
 coverage_log = []

@@ -1,5 +1,3 @@
-# === config.yaml ===
-
 # Environment Config
 env_config:
   grid_size: 15
